@@ -1,0 +1,24 @@
+.config-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+  width: 500px;
+}
+
+.config-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: 500px;
+}
+
+.config-boolean-fields {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.5rem;
+  width: 500px;
+}
+
+.config-fields > p {
+  width: 250px;
+}
