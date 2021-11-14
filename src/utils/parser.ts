@@ -7,7 +7,7 @@ export function purgeCurlyBracket(str: string) {
 }
 
 export function parseIncBin(str: string, label: string) {
-  const regex = new RegExp(`\\b${label}\\b\\s*\\[?\\s*\\]?\\s*=\\s*INCBIN_[US][0-9][0-9]?\\(\\s*"([^"]*)"\\s*\\)`);
+  const regex = new RegExp(`\\b${label}\\b\\s*\\[?\\s*\\]?\\s*=\\s*INCBIN_[US][0-9][0-9]?\\(\\s*"([^"]*)"\\s*\\);`);
   const match = str.match(regex);
   if (!match) {
     throw Error(`Error parse INCBIN, ${label} is missing.`);
@@ -31,17 +31,19 @@ export function parseObjectEventGfxMk(str: string, path: string) {
   path = path.replace("graphics/object_events/pics", "\\$\\(OBJEVENTGFXDIR\\)");
   const regex = new RegExp(
     `${path}([^:]*):\\s*%\\.(\\b\\w*\\b):\\s*%\\.(\\b\\w*\\b)\\n\\s*\\$\\(GFX\\)\\s*\\$<\\s*\\$@\\s*-mwidth\\s*(\\b\\d*\\b)\\s*-mheight\\s*(\\b\\d*\\b)`,
-    "g"
   );
-  console.log(regex);
-  return [...str.matchAll(regex)].map((h) => ({
-    path: h[1],
-    out: h[2],
-    in: h[3],
-    mWidth: h[4],
-    mHeight: h[5],
-    match: h[0],
-  }));
+  const match = str.match(regex);
+  if (!match) {
+    throw Error(`Error parse INCBIN, ${path} is missing.`);
+  }
+  return {
+    path: match[1],
+    out: match[2],
+    in: match[3],
+    mWidth: match[4],
+    mHeight: match[5],
+    match: match[0],
+  };
 }
 
 export function parseCObjectArray(str: string, label: string) {

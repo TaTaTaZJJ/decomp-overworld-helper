@@ -19,5 +19,5 @@ export function getObjectEventDefinitions(workspaceRoot: string) {
     throw Error("Missing NUM_OBJ_EVENT_GFX definition");
   }
 
-  return { objectEvent: sanitizedObjectEvents, totalObjectEvent: totalObjectEvent.value };
+  return { objectEvents: sanitizedObjectEvents, totalObjectEvent: totalObjectEvent.value };
 }

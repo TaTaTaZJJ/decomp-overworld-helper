@@ -1,3 +1,4 @@
+import { ObjectEvent } from "./../core/objectEvent";
 import { Disposable, Webview, WebviewPanel, window, ViewColumn, ExtensionContext, Uri, workspace } from "vscode";
 import { getShadowSizes } from "../core/getShadowSizes";
 import { getTracks } from "../core/getTracks";
@@ -8,45 +9,51 @@ export class OverworldHelperPanel {
   private readonly _panel: WebviewPanel;
   private _disposables: Disposable[] = [];
 
-  private constructor(panel: WebviewPanel, context: ExtensionContext) {
+  private constructor(panel: WebviewPanel, context: ExtensionContext, workspaceRoot: string) {
     this._panel = panel;
-
     this._panel.onDidDispose(this.dispose, null, this._disposables);
-
-    this._panel.webview.html = this._getWebviewContent(this._panel.webview, context);
+    this._panel.webview.html = this._getWebviewContent(this._panel.webview, context, workspaceRoot);
   }
 
-  public static render(context: ExtensionContext) {
+  public static render(context: ExtensionContext, workspaceRoot: string) {
     if (OverworldHelperPanel.currentPanel) {
       OverworldHelperPanel.currentPanel._panel.reveal(ViewColumn.One);
     } else {
-      const panel = window.createWebviewPanel(
-        // Panel view type
-        "tasOverworldHelper",
-        // Panel title
-        "Ta's Overworld Helper",
-        // The editor column the panel should be displayed in
-        ViewColumn.One,
-        // Extra panel configurations
-        {
-          // Enable JavaScript in the webview
-          enableScripts: true,
-        }
-      );
-
-      OverworldHelperPanel.currentPanel = new OverworldHelperPanel(panel, context);
-
-      return panel;
+      const panel = window.createWebviewPanel("overworldHelper", "Decomp Overworld Helper", ViewColumn.One, {
+        enableScripts: true,
+      });
+      OverworldHelperPanel.currentPanel = new OverworldHelperPanel(panel, context, workspaceRoot);
     }
+  }
+
+  public static setData(objectEvent: ObjectEvent, context: ExtensionContext, workspaceRoot: string) {
+    if (!OverworldHelperPanel.currentPanel) {
+      this.render(context, workspaceRoot);
+    }
+    const name = objectEvent.definition;
+    const data = objectEvent.getDataFromWorkspace();
+    this.currentPanel?._panel.webview.postMessage({
+      command: "editEntry",
+      name,
+      data: data.info,
+      images: data.images,
+      imageTables: data.imageTables,
+    });
+    this.currentPanel?._panel.webview.onDidReceiveMessage(message=>{
+      switch (message.command) {
+        case 'saveEntry':
+          objectEvent.setDataToWorkspace(message.data);
+          break;
+        case 'deleteEntry':
+          objectEvent.deleteFromWorkspace();
+          break;
+      }
+    });
   }
 
   public dispose() {
     OverworldHelperPanel.currentPanel = undefined;
-
-    // Dispose of the current webview panel
     this._panel.dispose();
-
-    // Dispose of all disposables (i.e. commands) for the current webview panel
     while (this._disposables.length) {
       const disposable = this._disposables.pop();
       if (disposable) {
@@ -55,7 +62,7 @@ export class OverworldHelperPanel {
     }
   }
 
-  private _getWebviewContent(webview: Webview, context: ExtensionContext) {
+  private _getWebviewContent(webview: Webview, context: ExtensionContext, workspaceRoot: string) {
     const toolkitUri = getUri(webview, context.extensionUri, [
       "node_modules",
       "@vscode",
@@ -65,19 +72,12 @@ export class OverworldHelperPanel {
     ]);
 
     const styleMainUri = webview.asWebviewUri(Uri.joinPath(context.extensionUri, "media", "main.css"));
-
-    const workspaceRoot =
-      workspace.workspaceFolders && workspace.workspaceFolders.length > 0
-        ? workspace.workspaceFolders[0].uri.fsPath
-        : undefined;
-
-    if (!workspaceRoot) {
-      throw Error("There is no workspace root folder.");
-    }
+    const mainUri = getUri(webview, context.extensionUri, ["media", "main.js"]);
 
     const shadowSizeOptions = getShadowSizes(workspaceRoot)
       .map((s) => "<vscode-option>" + s + "</vscode-option>")
       .join("\n");
+
     const tracksOptions = getTracks(workspaceRoot)
       .map((t) => "<vscode-option>" + t + "</vscode-option>")
       .join("\n");
@@ -90,8 +90,9 @@ export class OverworldHelperPanel {
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <script type="module" src="${toolkitUri}"></script>
+          <script type="module" src="${mainUri}"></script>
           <link href="${styleMainUri}" rel="stylesheet">
-          <title>Ta's Overworld Helper</title>
+          <title>Decomp. Overworld Helper</title>
         </head>
         <body>
           <div class="config-fields">
@@ -100,7 +101,10 @@ export class OverworldHelperPanel {
 
             <p>Images</p>
             <div id="oe-images"></div>
-          
+
+            <p>Preview</p>
+            <div id="oe-images-preview"></div>
+
             <p>Tile Tag</p>
             <vscode-text-field id="oe-tile-tag"></vscode-text-field>
           
@@ -159,63 +163,10 @@ export class OverworldHelperPanel {
             </div>
 
             <div class="config-actions">
-              <vscode-button id="delete-event-object">Delete</vscode-button>
-              <vscode-button id="save-event-object">Save</vscode-button>
+              <vscode-button id="delete-object-event">Delete</vscode-button>
+              <vscode-button id="save-object-event">Save</vscode-button>
             </div>
         </body>
-        <script>
-          const vscode = acquireVsCodeApi();
-
-          const tileTag = document.getElementById('oe-tile-tag');
-          const paletteTag1 = document.getElementById('oe-palette-tag-1');
-          const paletteTag2 = document.getElementById('oe-palette-tag-2');
-          const size = document.getElementById('oe-size');
-          const width = document.getElementById('oe-width');
-          const height = document.getElementById('oe-height');
-          const paletteSlot = document.getElementById('oe-palette-slot');
-          const shadowSize = document.getElementById('oe-shadow-size');
-          const inanimate = document.getElementById('oe-in-animate');
-          const disableReflectionPaletteLoad = document.getElementById('oe-disable-reflection-palette-load');
-          const tracks = document.getElementById('oe-tracks');
-          const oam = document.getElementById('oe-oam');
-          const subspriteTables = document.getElementById('oe-subsprite-tables');
-          const anims = document.getElementById('oe-anims');
-          const images = document.getElementById('oe-images');
-          const affineAnims = document.getElementById('oe-affine-anims');
-          const name = document.getElementById('oe-name');
-
-          window.addEventListener('message', event => {
-            const message = event.data; // The JSON data our extension sent
-            switch (message.command) {
-              case "editEntry":
-                name.value = message.name;
-                tileTag.value = message.data.tileTag;
-                paletteTag1.value = message.data.paletteTag1;
-                paletteTag2.value = message.data.paletteTag2;
-                size.value = message.data.size;
-                width.value = message.data.width;
-                height.value = message.data.height;
-                paletteSlot.value = message.data.paletteSlot;
-                shadowSize.value = message.data.shadowSize;
-                inanimate.checked = message.data.inanimate == "TRUE" ? true : false;
-                disableReflectionPaletteLoad.checked = message.data.disableReflectionPaletteLoad == "TRUE" ? true : false;
-                tracks.value = message.data.tracks;
-                oam.value = message.data.oam;
-                subspriteTables.value = message.data.subspriteTables;
-                anims.value = message.data.anims;
-                affineAnims.value = message.data.affineAnims;
-
-                images.innerHTML = "";
-                message.images.forEach(image=>{
-                  const img = document.createElement("img");
-                  img.src = image;
-                  images.appendChild(img);
-                });
-                break;
-            }
-          });
-        </script>
-      </html>
-        `;
+      </html>`;
   }
 }

@@ -1,8 +1,8 @@
 {
-  "name": "ta-s-overworld-helper",
-  "displayName": "Ta's Overworld Helper",
+  "name": "decomp-overworld-helper",
+  "displayName": "Decomp Overworld Helper",
   "description": "",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "engines": {
     "vscode": "^1.61.0"
   },
@@ -10,21 +10,37 @@
     "Other"
   ],
   "activationEvents": [
-    "onView:overworldOutline"
+    "onView:objectEvents"
   ],
   "main": "./out/extension.js",
   "contributes": {
-    "commands":[
+    "commands": [
       {
-        "command": "overworldOutline.deleteEntry",
-        "title": "Delete"
+        "command": "objectEvents.addEntry",
+        "title": "Add new overworld"
       },
       {
-        "command": "overworldOutline.editEntry",
-        "title": "Edit",
+        "command": "objectEvents.refreshEntry",
+        "title": "Refresh",
+        "icon": {
+          "light": "resources/light/refresh.svg",
+          "dark": "resources/dark/refresh.svg"
+        }
+      },
+      {
+        "command": "objectEvents.editEntry",
+        "title": "Edit overworld",
         "icon": {
           "light": "resources/light/edit.svg",
           "dark": "resources/dark/edit.svg"
+        }
+      },
+      {
+        "command": "objectEvents.deleteEntry",
+        "title": "Delete overworld",
+        "icon": {
+          "light": "resources/light/trash.svg",
+          "dark": "resources/dark/trash.svg"
         }
       }
     ],
@@ -40,20 +56,32 @@
     "views": {
       "overworldHelper": [
         {
-          "id": "overworldOutline",
-          "name": "Outline"
+          "id": "objectEvents",
+          "name": "Object Events"
         }
       ]
     },
     "menus": {
-      "view/item/context": [
+      "view/title": [
         {
-          "command": "overworldOutline.deleteEntry",
-          "when": "view == overworldOutline && viewItem == objectEventDefinition"
+          "command": "objectEvents.refreshEntry",
+          "when": "view == objectEvents",
+          "group": "navigation"
         },
         {
-          "command": "overworldOutline.editEntry",
-          "when": "view == overworldOutline",
+          "command": "objectEvents.addEntry",
+          "when": "view == objectEvents"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "objectEvents.deleteEntry",
+          "when": "view == objectEvents && viewItem == objectEvent",
+          "group": "inline"
+        },
+        {
+          "command": "objectEvents.editEntry",
+          "when": "view == objectEvents && viewItem == objectEvent",
           "group": "inline"
         }
       ]
@@ -69,6 +97,7 @@
   },
   "devDependencies": {
     "@types/glob": "^7.1.4",
+    "@types/lodash": "^4.14.176",
     "@types/mocha": "^9.0.0",
     "@types/node": "14.17.27",
     "@types/vscode": "^1.61.0",
@@ -81,6 +110,7 @@
     "typescript": "^4.4.4"
   },
   "dependencies": {
-    "@vscode/webview-ui-toolkit": "^0.8.3"
+    "@vscode/webview-ui-toolkit": "^0.8.3",
+    "lodash": "^4.17.21"
   }
 }
