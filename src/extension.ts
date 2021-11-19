@@ -16,13 +16,8 @@ export function activate(context: ExtensionContext) {
 
   const objectEventsProvider = new ObjectEventsTreeDataProvider(workspaceRoot);
 
-  window.createTreeView("objectEvents", {
-    treeDataProvider: objectEventsProvider,
-  });
-
+  window.registerTreeDataProvider("objectEvents", objectEventsProvider);
   commands.registerCommand("objectEvents.refreshEntry", () => objectEventsProvider.refresh());
-
-  OverworldHelperPanel.render(context, workspaceRoot);
 
   commands.registerCommand("objectEvents.addEntry", async () => {
     try {
@@ -35,7 +30,10 @@ export function activate(context: ExtensionContext) {
 
   commands.registerCommand("objectEvents.editEntry", (objectEvent: ObjectEvent) => {
     try {
-      OverworldHelperPanel.setData(objectEvent, context, workspaceRoot);
+      OverworldHelperPanel.render(context, workspaceRoot);
+      setTimeout(() => {
+        OverworldHelperPanel.setData(objectEvent, context, workspaceRoot);
+      }, 1000);
     } catch (error) {
       console.log(error);
     }

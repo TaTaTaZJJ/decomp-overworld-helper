@@ -12,7 +12,11 @@
     "Other"
   ],
   "activationEvents": [
-    "onView:objectEvents"
+    "onView:objectEvents",
+    "onCommand:objectEvents.addEntry",
+    "onCommand:objectEvents.refreshEntry",
+    "onCommand:objectEvents.editEntry",
+    "onCommand:objectEvents.deleteEntry"
   ],
   "main": "./out/extension.js",
   "contributes": {
