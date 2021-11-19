@@ -2,6 +2,7 @@
   "name": "decomp-overworld-helper",
   "displayName": "Decomp Overworld Helper",
   "publisher": "TaZJJ",
+  "repository": "https://github.com/TaTaTaZJJ/decomp-overworld-helper",
   "description": "",
   "version": "1.0.0",
   "engines": {
