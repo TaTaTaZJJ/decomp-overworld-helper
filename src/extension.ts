@@ -15,37 +15,36 @@ export function activate(context: ExtensionContext) {
   }
 
   const objectEventsProvider = new ObjectEventsTreeDataProvider(workspaceRoot);
-
   window.registerTreeDataProvider("objectEvents", objectEventsProvider);
-  commands.registerCommand("objectEvents.refreshEntry", () => objectEventsProvider.refresh());
 
-  commands.registerCommand("objectEvents.addEntry", async () => {
-    try {
-      await ObjectEvent.create(workspaceRoot);
-      objectEventsProvider.refresh();
-    } catch (error) {
-      console.log(error);
-    }
-  });
-
-  commands.registerCommand("objectEvents.editEntry", (objectEvent: ObjectEvent) => {
-    try {
-      OverworldHelperPanel.render(context, workspaceRoot);
-      setTimeout(() => {
-        OverworldHelperPanel.setData(objectEvent, context, workspaceRoot);
-      }, 1000);
-    } catch (error) {
-      console.log(error);
-    }
-  });
-
-  commands.registerCommand("objectEvents.deleteEntry", (objectEvent: ObjectEvent) => {
-    try {
-      objectEvent.deleteFromWorkspace();
-    } catch (error) {
-      console.log(error);
-    }
-  });
+  context.subscriptions.push(
+    commands.registerCommand("objectEvents.refreshEntry", () => objectEventsProvider.refresh()),
+    commands.registerCommand("objectEvents.addEntry", async () => {
+      try {
+        await ObjectEvent.create(workspaceRoot);
+        objectEventsProvider.refresh();
+      } catch (error) {
+        window.showErrorMessage(String(error));
+      }
+    }),
+    commands.registerCommand("objectEvents.editEntry", (objectEvent: ObjectEvent) => {
+      try {
+        OverworldHelperPanel.render(context, workspaceRoot);
+        setTimeout(() => {
+          OverworldHelperPanel.setData(objectEvent, context, workspaceRoot);
+        }, 1000);
+      } catch (error) {
+        window.showErrorMessage(String(error));
+      }
+    }),
+    commands.registerCommand("objectEvents.deleteEntry", (objectEvent: ObjectEvent) => {
+      try {
+        objectEvent.deleteFromWorkspace();
+      } catch (error) {
+        window.showErrorMessage(String(error));
+      }
+    })
+  );
 }
 
 export function deactivate() {}
