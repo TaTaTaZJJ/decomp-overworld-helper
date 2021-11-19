@@ -4,7 +4,7 @@
   "publisher": "TaZJJ",
   "repository": "https://github.com/TaTaTaZJJ/decomp-overworld-helper",
   "description": "",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "engines": {
     "vscode": "^1.61.0"
   },
