@@ -1,24 +1,38 @@
-.config-actions {
+.form-actions {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  margin-top: 0.5rem;
   margin-bottom: 0.5rem;
-  width: 500px;
 }
 
-.config-fields {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  width: 500px;
-}
-
-.config-boolean-fields {
+.form-checkboxs {
   display: flex;
   justify-content: flex-end;
   margin-bottom: 0.5rem;
-  width: 500px;
 }
 
-.config-fields > p {
-  width: 250px;
+.form-item {
+  margin-bottom: 5px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.form-item > label {
+  width:150px
+}
+
+.form-item > vscode-text-field {
+  width:350px
+}
+
+.form-item > vscode-dropdown {
+  width:350px
+}
+
+#form {
+  min-width: 800px;
+  width: 40%;
+  margin-left: auto;
+  margin-right: auto;
 }

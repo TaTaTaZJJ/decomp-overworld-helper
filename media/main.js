@@ -1,5 +1,30 @@
 const vscode = acquireVsCodeApi();
+// State
+const state = {
+  data: {
+    tileTag: "",
+    paletteTag1: "",
+    paletteTag2: "",
+    size: "",
+    width: "",
+    height: "",
+    paletteSlot: "",
+    shadowSize: "",
+    inanimate: "",
+    disableReflectionPaletteLoad: "",
+    tracks: "",
+    oam: "",
+    subspriteTables: "",
+    anims: "",
+    images: "",
+    affineAnims: "",
+  },
+  framesTable: [],
+  imagesSrc: [],
+  name: "",
+};
 
+// Bindings
 const definition = document.getElementById("oe-name");
 const tileTag = document.getElementById("oe-tile-tag");
 const paletteTag1 = document.getElementById("oe-palette-tag-1");
@@ -15,67 +40,215 @@ const tracks = document.getElementById("oe-tracks");
 const oam = document.getElementById("oe-oam");
 const subspriteTables = document.getElementById("oe-subsprite-tables");
 const anims = document.getElementById("oe-anims");
-const images = document.getElementById("oe-images");
+const imageFrames = document.getElementById("oe-images");
 const imagesPreview = document.getElementById("oe-images-preview");
 const affineAnims = document.getElementById("oe-affine-anims");
+const imagePtr = document.getElementById("oe-image-ptr");
 
-window.onload = () => {
-  const { data, images, name } = vscode.getState();
+tileTag.oninput = () => {
+  state.data.tileTag = tileTag.value;
+};
 
-  definition.value = name;
-  tileTag.value = data.tileTag;
-  paletteTag1.value = data.paletteTag1;
-  paletteTag2.value = data.paletteTag2;
-  size.value = data.size;
-  width.value = data.width;
-  height.value = data.height;
-  paletteSlot.value = data.paletteSlot;
-  shadowSize.value = data.shadowSize;
-  inanimate.checked = data.inanimate === "TRUE" ? true : false;
-  disableReflectionPaletteLoad.checked = data.disableReflectionPaletteLoad === "TRUE" ? true : false;
-  tracks.value = data.tracks;
-  oam.value = data.oam;
-  subspriteTables.value = data.subspriteTables;
-  anims.value = data.anims;
-  affineAnims.value = data.affineAnims;
+paletteTag1.oninput = () => {
+  state.data.paletteTag1 = paletteTag1.value;
+};
 
+paletteTag2.oninput = () => {
+  state.data.paletteTag2 = paletteTag2.value;
+};
+
+size.oninput = () => {
+  state.data.size = size.value;
+};
+
+width.oninput = () => {
+  state.data.width = width.value;
+};
+
+height.oninput = () => {
+  state.data.height = height.value;
+};
+
+paletteSlot.oninput = () => {
+  state.data.paletteSlot = paletteSlot.value;
+};
+
+imagePtr.oninput = () => {
+  state.data.images = imagePtr.value;
+};
+
+shadowSize.onchange = () => {
+  state.data.shadowSize = shadowSize.value;
+};
+
+inanimate.onchange = () => {
+  state.data.inanimate = inanimate.checked ? "TRUE" : "FALSE";
+};
+
+disableReflectionPaletteLoad.onchange = () => {
+  state.data.disableReflectionPaletteLoad = disableReflectionPaletteLoad.checked ? "TRUE" : "FALSE";
+};
+
+tracks.onchange = () => {
+  state.data.tracks = tracks.value;
+};
+
+oam.onchange = () => {
+  state.data.oam = oam.value;
+};
+
+subspriteTables.oninput = () => {
+  state.data.subspriteTables = subspriteTables.value;
+};
+
+anims.oninput = () => {
+  state.data.anims = anims.value;
+};
+
+affineAnims.oninput = () => {
+  state.data.affineAnims = affineAnims.value;
+};
+
+// Methods
+function renderImagesPreview() {
   imagesPreview.innerHTML = "";
-  images.forEach((image) => {
+  state.imagesSrc.forEach((image) => {
     const img = document.createElement("img");
     img.src = image;
     imagesPreview.appendChild(img);
   });
+}
+
+function renderFrameRow(image, imageIndex) {
+  const div = document.createElement("div");
+  div.style = "display:flex";
+
+  const typeField = document.createElement("vscode-dropdown");
+  const ptrField = document.createElement("vscode-text-field");
+  const widthField = document.createElement("vscode-text-field");
+  const heightField = document.createElement("vscode-text-field");
+  const frameField = document.createElement("vscode-text-field");
+  const deleteButton = document.createElement("vscode-button");
+
+  typeField.style = "width:250px; margin-right:2px;padding-bottom:1px;";
+  ptrField.style = "width:300px; margin-right:2px;padding-bottom:1px;";
+  widthField.style = "width:100px; margin-right:2px;padding-bottom:1px;";
+  heightField.style = "width:100px; margin-right:2px;padding-bottom:1px;";
+  frameField.style = "width:100px; margin-right:2px;padding-bottom:1px;";
+  deleteButton.style = "width:50px; height:25px; padding-bottom:1px";
+
+  typeField.innerHTML = "<vscode-option>overworld_frame</vscode-option><vscode-option>obj_frame_tiles</vscode-option>";
+  deleteButton.innerText = "-";
+  typeField.value = image.type;
+  ptrField.value = image.ptr;
+  widthField.value = image.width;
+  heightField.value = image.height;
+  frameField.value = image.frame;
+
+  typeField.onchange = () => {
+    console.log("type");
+    image.type = typeField.value;
+  };
+  ptrField.oninput = () => {
+    console.log("ptrField");
+    image.ptr = ptrField.value;
+  };
+  widthField.oninput = () => {
+    console.log("widthField");
+    image.width = widthField.value;
+  };
+  heightField.oninput = () => {
+    console.log("heightField");
+    image.height = heightField.value;
+  };
+  frameField.oninput = () => {
+    console.log("frameField");
+    image.frame = frameField.value;
+  };
+
+  deleteButton.onclick = () => {
+    state.framesTable.splice(imageIndex, 1);
+    imageFrames.removeChild(div);
+    vscode.setState({
+      state,
+    });
+  };
+
+  div.appendChild(typeField);
+  div.appendChild(ptrField);
+  div.appendChild(widthField);
+  div.appendChild(heightField);
+  div.appendChild(frameField);
+  div.appendChild(deleteButton);
+  imageFrames.appendChild(div);
+}
+
+function renderFramesTable() {
+  imageFrames.innerHTML = "";
+  state.framesTable.forEach(renderFrameRow);
+}
+
+document.getElementById("add-frame").onclick = (e) => {
+  const image = {
+    type: "overworld_frame",
+    ptr: "",
+    width: (state.data.width / 8).toString(),
+    height: (state.data.height / 8).toString(),
+    frame: state.framesTable.length.toString(),
+  };
+  state.framesTable.push(image);
+  renderFrameRow(image, state.framesTable.length);
+  vscode.setState({
+    state,
+  });
+};
+
+function deserializeData() {
+  if (!vscode.getState()) {
+    return;
+  }
+  const vscodeState = vscode.getState();
+  const _state = vscodeState.state;
+
+  state.data = _state.data;
+  state.name = _state.name;
+
+  definition.value = _state.name;
+  tileTag.value = _state.data.tileTag;
+  paletteTag1.value = _state.data.paletteTag1;
+  paletteTag2.value = _state.data.paletteTag2;
+  size.value = _state.data.size;
+  width.value = _state.data.width;
+  height.value = _state.data.height;
+  paletteSlot.value = _state.data.paletteSlot;
+  shadowSize.value = _state.data.shadowSize;
+  inanimate.checked = _state.data.inanimate === "TRUE" ? true : false;
+  disableReflectionPaletteLoad.checked = _state.data.disableReflectionPaletteLoad === "TRUE" ? true : false;
+  tracks.value = _state.data.tracks;
+  oam.value = _state.data.oam;
+  subspriteTables.value = _state.data.subspriteTables;
+  anims.value = _state.data.anims;
+  affineAnims.value = _state.data.affineAnims;
+  imagePtr.value = _state.data.images;
+
+  state.framesTable = _state.framesTable;
+  state.imagesSrc = _state.imagesSrc;
+  renderImagesPreview();
+  renderFramesTable();
+}
+
+window.onload = () => {
+  deserializeData();
 };
 
 window.addEventListener("message", (event) => {
   const message = event.data;
   switch (message.command) {
     case "editEntry":
-      vscode.setState({ data: message.data, images: message.images });
-      definition.value = message.name;
-      tileTag.value = message.data.tileTag;
-      paletteTag1.value = message.data.paletteTag1;
-      paletteTag2.value = message.data.paletteTag2;
-      size.value = message.data.size;
-      width.value = message.data.width;
-      height.value = message.data.height;
-      paletteSlot.value = message.data.paletteSlot;
-      shadowSize.value = message.data.shadowSize;
-      inanimate.checked = message.data.inanimate === "TRUE" ? true : false;
-      disableReflectionPaletteLoad.checked = message.data.disableReflectionPaletteLoad === "TRUE" ? true : false;
-      tracks.value = message.data.tracks;
-      oam.value = message.data.oam;
-      subspriteTables.value = message.data.subspriteTables;
-      anims.value = message.data.anims;
-      affineAnims.value = message.data.affineAnims;
-
-      imagesPreview.innerHTML = "";
-      message.images.forEach((image) => {
-        const img = document.createElement("img");
-        img.src = image;
-        imagesPreview.appendChild(img);
+      vscode.setState({
+        state: { data: message.data, imagesSrc: message.images, framesTable: message.imageTables, name: message.name },
       });
-
+      deserializeData();
       break;
   }
 });
@@ -84,24 +257,8 @@ document.getElementById("save-object-event").onclick = (e) => {
   vscode.postMessage({
     command: "saveEntry",
     definition: definition.value,
-    data: {
-      tileTag: tileTag.value,
-      paletteTag1: paletteTag1.value,
-      paletteTag2: paletteTag2.value,
-      size: size.value,
-      width: width.value,
-      height: height.value,
-      paletteSlot: paletteSlot.value,
-      images: images.value,
-      shadowSize: shadowSize.value,
-      inanimate: inanimate.checked ? "TRUE" : "FALSE",
-      disableReflectionPaletteLoad: disableReflectionPaletteLoad.checked ? "TRUE" : "FALSE",
-      tracks: tracks.value,
-      oam: oam.value,
-      subspriteTables: subspriteTables.value,
-      anims: anims.value,
-      affineAnims: affineAnims.value,
-    },
+    data: state.data,
+    frames: state.framesTable,
   });
 };
 

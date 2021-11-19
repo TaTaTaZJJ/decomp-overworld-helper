@@ -19,7 +19,7 @@ export class ObjectEventsTreeDataProvider implements vscode.TreeDataProvider<Obj
 
   getChildren(element?: ObjectEvent): Thenable<ObjectEvent[]> {
     if (!this.workspaceRoot) {
-      vscode.window.showInformationMessage("No dependency in empty workspace");
+      vscode.window.showInformationMessage("No object event in empty workspace");
       return Promise.resolve([]);
     }
 

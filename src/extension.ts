@@ -24,9 +24,10 @@ export function activate(context: ExtensionContext) {
 
   OverworldHelperPanel.render(context, workspaceRoot);
 
-  commands.registerCommand("objectEvents.addEntry", () => {
+  commands.registerCommand("objectEvents.addEntry", async () => {
     try {
-      console.log(ObjectEvent.create(workspaceRoot));
+      await ObjectEvent.create(workspaceRoot);
+      objectEventsProvider.refresh();
     } catch (error) {
       console.log(error);
     }
@@ -42,7 +43,6 @@ export function activate(context: ExtensionContext) {
 
   commands.registerCommand("objectEvents.deleteEntry", (objectEvent: ObjectEvent) => {
     try {
-      // OverworldHelperPanel.setData(objectEvent, context, workspaceRoot);
       objectEvent.deleteFromWorkspace();
     } catch (error) {
       console.log(error);

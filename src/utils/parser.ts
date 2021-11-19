@@ -61,16 +61,16 @@ export function parseCObjectArray(str: string, label: string) {
 
 export function parseCIndexedObjectArray(str: string, label: string) {
   const regex = new RegExp(`\\b${label}\\b\\s*(\\[?[^\\]]*\\])?\\s*=\\s*\\{([^;]*)};`, "g");
-  const match = str.match(regex)?.[0];
+  const match = str.match(regex);
   if (!match) {
     throw Error(`${label} not found`);
   }
 
-  const arrRegex = /\[([A-Za-z0-9_]*)\]=(&?[A-Za-z0-9_]*)/g;
+  const arrRegex = /\[([A-Za-z0-9_]*)\]\s*=\s*(&?[A-Za-z0-9_]*)/g;
 
   return {
-    match,
-    items: [...match.replaceAll(" ", "").matchAll(arrRegex)].map((h) => ({
+    match: match[0],
+    items: [...match[0].replaceAll(" ", "").matchAll(arrRegex)].map((h) => ({
       value: h[2],
       index: h[1],
     })),

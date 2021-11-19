@@ -39,12 +39,12 @@ export class OverworldHelperPanel {
       images: data.images,
       imageTables: data.imageTables,
     });
-    this.currentPanel?._panel.webview.onDidReceiveMessage(message=>{
+    this.currentPanel?._panel.webview.onDidReceiveMessage((message) => {
       switch (message.command) {
-        case 'saveEntry':
-          objectEvent.setDataToWorkspace(message.data);
+        case "saveEntry":
+          objectEvent.setDataToWorkspace(message.data, message.frames);
           break;
-        case 'deleteEntry':
+        case "deleteEntry":
           objectEvent.deleteFromWorkspace();
           break;
       }
@@ -95,77 +95,117 @@ export class OverworldHelperPanel {
           <title>Decomp. Overworld Helper</title>
         </head>
         <body>
-          <div class="config-fields">
-            <p>Name</p>
-            <vscode-text-field id="oe-name"></vscode-text-field>
+          <div id="form">
+            <div class="form-item">
+              <label for="">Images</label>
+              <div id="oe-images-preview"></div>
+            </div>
 
-            <p>Images</p>
-            <div id="oe-images"></div>
+            <div class="form-item">
+              <label for="oe-name">Name</label>
+              <vscode-text-field id="oe-name" disabled></vscode-text-field>
+            </div>
 
-            <p>Preview</p>
-            <div id="oe-images-preview"></div>
+            <div class="form-item">
+              <label for="oe-tile-tag">Tile Tag</label>
+              <vscode-text-field id="oe-tile-tag"></vscode-text-field>
+            </div>
 
-            <p>Tile Tag</p>
-            <vscode-text-field id="oe-tile-tag"></vscode-text-field>
-          
-            <p>Palette Slot</p>
-            <vscode-text-field id="oe-palette-slot"></vscode-text-field>
-          
-            <p>Palette Tag 1</p>
-            <vscode-text-field id="oe-palette-tag-1"></vscode-text-field>
-          
-            <p>Palette Tag 2</p>
-            <vscode-text-field id="oe-palette-tag-2"></vscode-text-field>
-          
-            <p>Height</p>
-            <vscode-text-field id="oe-height"></vscode-text-field>
-          
-            <p>Width</p>
-            <vscode-text-field id="oe-width"></vscode-text-field>
-          
-            <p>Size</p>
-            <vscode-text-field id="oe-size"></vscode-text-field>
-          
-            <p>Shadow Size</p>
-            <vscode-dropdown id="oe-shadow-size">
-              ${shadowSizeOptions}
-            </vscode-dropdown>
-          
-            <p>Tracks</p>
-            <vscode-dropdown id="oe-tracks">
-              ${tracksOptions}
-            </vscode-dropdown>
-          
-            <p>Oam</p>
-            <vscode-dropdown id="oe-oam">
-              <vscode-option>&gObjectEventBaseOam_8x8</vscode-option>
-              <vscode-option>&gObjectEventBaseOam_16x8</vscode-option>
-              <vscode-option>&gObjectEventBaseOam_16x16</vscode-option>
-              <vscode-option>&gObjectEventBaseOam_32x8</vscode-option>
-              <vscode-option>&gObjectEventBaseOam_64x32</vscode-option>
-              <vscode-option>&gObjectEventBaseOam_16x32</vscode-option>
-              <vscode-option>&gObjectEventBaseOam_32x32</vscode-option>
-              <vscode-option>&gObjectEventBaseOam_64x64</vscode-option>
-            </vscode-dropdown>
-          
-            <p>Subsprite Tables</p>
-            <vscode-text-field id="oe-subsprite-tables"></vscode-text-field>
-          
-            <p>Animations</p>
-            <vscode-text-field id="oe-anims"></vscode-text-field>
-          
-            <p>Affine Animations</p>
-            <vscode-text-field id="oe-affine-anims"></vscode-text-field>
-          </div>
-            <div class="config-boolean-fields">
+            <div class="form-item">
+              <label for="oe-palette-slot">Palette Slot</label>
+              <vscode-text-field id="oe-palette-slot"></vscode-text-field>
+            </div>
+            
+            <div class="form-item">
+              <label for="oe-palette-tag-1">Palette Tag 1</label>
+              <vscode-text-field id="oe-palette-tag-1"></vscode-text-field>
+            </div>
+            
+            <div class="form-item">
+              <label for="oe-palette-tag-2">Palette Tag 2</label>
+              <vscode-text-field id="oe-palette-tag-2"></vscode-text-field>
+            </div>
+
+            <div class="form-item">
+              <label for="oe-height">Height</label>
+              <vscode-text-field id="oe-height"></vscode-text-field>
+            </div>
+            
+            <div class="form-item">
+              <label for="oe-width">Width</label>
+              <vscode-text-field id="oe-width"></vscode-text-field>
+            </div>
+            
+            <div class="form-item">
+              <label for="oe-size">Size</label>
+              <vscode-text-field id="oe-size"></vscode-text-field>
+            </div>
+
+            <div class="form-item">
+              <label for="oe-shadow-size">Shadow Size</label>
+              <vscode-dropdown id="oe-shadow-size">
+                ${shadowSizeOptions}
+              </vscode-dropdown>
+            </div>
+                           
+            <div class="form-item">
+              <label for="oe-tracks">Tracks</label>
+              <vscode-dropdown id="oe-tracks">
+                ${tracksOptions}
+              </vscode-dropdown>
+            </div>
+            
+            <div class="form-item">
+              <label for="oe-oam">Oam</label>
+              <vscode-dropdown id="oe-oam">
+                <vscode-option>&gObjectEventBaseOam_8x8</vscode-option>
+                <vscode-option>&gObjectEventBaseOam_16x8</vscode-option>
+                <vscode-option>&gObjectEventBaseOam_16x16</vscode-option>
+                <vscode-option>&gObjectEventBaseOam_32x8</vscode-option>
+                <vscode-option>&gObjectEventBaseOam_64x32</vscode-option>
+                <vscode-option>&gObjectEventBaseOam_16x32</vscode-option>
+                <vscode-option>&gObjectEventBaseOam_32x32</vscode-option>
+                <vscode-option>&gObjectEventBaseOam_64x64</vscode-option>
+              </vscode-dropdown>
+            </div>
+
+            <div class="form-item">
+              <label for="oe-subsprite-tables">Subsprite Tables</label>
+              <vscode-text-field id="oe-subsprite-tables"></vscode-text-field>
+            </div>
+
+            <div class="form-item">
+              <label for="">Animations</label>
+              <vscode-text-field id="oe-anims"></vscode-text-field>
+            </div>
+
+            <div class="form-item">
+              <label for="">Affine Animations</label>
+              <vscode-text-field id="oe-affine-anims"></vscode-text-field>
+            </div>
+
+            <div class="form-checkboxs">
               <vscode-checkbox id="oe-in-animate">In animate</vscode-checkbox>
               <vscode-checkbox id="oe-disable-reflection-palette-load">Disable Reflection Palette Load</vscode-checkbox>
             </div>
+            
+            <div class="form-item">
+             <label for="oe-image-ptr">Image</label>
+              <vscode-text-field id="oe-image-ptr"></vscode-text-field>
+            </div>
 
-            <div class="config-actions">
+            <div class="form-item">
+              <label>Frames:</label>
+              <vscode-button id="add-frame" style="height:25px;">Add frame</vscode-button>
+            </div>
+
+            <div id="oe-images">No frames</div>
+
+            <div class="form-actions">
               <vscode-button id="delete-object-event">Delete</vscode-button>
               <vscode-button id="save-object-event">Save</vscode-button>
             </div>
+          </div>
         </body>
       </html>`;
   }

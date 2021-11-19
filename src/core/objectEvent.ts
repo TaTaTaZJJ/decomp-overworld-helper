@@ -1,7 +1,7 @@
 import * as path from "path";
 import * as fs from "fs";
 import * as config from "../config/pokeemerald.json";
-import { TreeItem, TreeItemCollapsibleState, window } from "vscode";
+import { TreeItem, TreeItemCollapsibleState, Uri, window } from "vscode";
 import { getFileString, writeFileString } from "../utils/getFileString";
 import {
   parseCIndexedObjectArray,
@@ -202,7 +202,7 @@ export class ObjectEvent extends TreeItem {
       const isObjectFrameTiles = match[1] === "obj_frame_tiles";
 
       return {
-        type: match[1],
+        type: isObjectFrameTiles ? match[1] : match[3],
         ptr: isObjectFrameTiles ? match[2] : match[4],
         width: isObjectFrameTiles ? undefined : match[5],
         height: isObjectFrameTiles ? undefined : match[6],
@@ -222,6 +222,28 @@ export class ObjectEvent extends TreeItem {
     return { images: this.images, imageTables: this.imageTables, imageStr: parsedData.match, picIncBins };
   }
 
+  private static _generateFrames(objectEventPicSymbol: string, width: number, height: number, count: number) {
+    const framesArr: string[] = [];
+    for (let index = 0; index < count; index++) {
+      framesArr.push(`overworld_frame(${objectEventPicSymbol}, ${width}, ${height}, ${index})`);
+    }
+    return framesArr.join(",\n\t");
+  }
+
+  private static _generateFramesObject(
+    objectEventPicTableSymbol: string,
+    objectEventPicSymbol: string,
+    width: number,
+    height: number,
+    count: number
+  ) {
+    return `\nstatic const struct SpriteFrameImage ${objectEventPicTableSymbol}[] = {\n\t${this._generateFrames(
+      objectEventPicSymbol,
+      width / 8,
+      height / 8,
+      count
+    )}\n};\n`;
+  }
   getDataFromWorkspace() {
     const info = this._getObjectEventInfo();
     const { images, imageTables } = this._getObjectEventImages();
@@ -232,8 +254,39 @@ export class ObjectEvent extends TreeItem {
     };
   }
 
-  setDataToWorkspace(newObjectEventData: ObjectEventInfo) {
-    const info = this._getObjectEventInfo();
+  private _generateFramesFromFrames(
+    frames: {
+      type: string;
+      ptr: string;
+      width?: string;
+      height?: string;
+      frame?: string;
+    }[]
+  ) {
+    const framesArr: string[] = [];
+    for (let i = 0; i < frames.length; i++) {
+      if (frames[i].type === "overworld_frame") {
+        framesArr.push(
+          `${frames[i].type}(${frames[i].ptr}, ${frames[i].width}, ${frames[i].height}, ${frames[i].frame})`
+        );
+      } else {
+        framesArr.push(`${frames[i].type}(${frames[i].ptr})`);
+      }
+    }
+    return framesArr.join(",\n\t");
+  }
+
+  setDataToWorkspace(
+    newObjectEventData: ObjectEventInfo,
+    frames: {
+      type: string;
+      ptr: string;
+      width?: string;
+      height?: string;
+      frame?: string;
+    }[]
+  ) {
+    this._getObjectEventInfo();
     const infoStr: string[] = [];
     for (let index = 0; index < objectInfoKeys.length; index++) {
       const key = objectInfoKeys[index];
@@ -243,10 +296,28 @@ export class ObjectEvent extends TreeItem {
       "&",
       ""
     )} = {${infoStr.join(", ")}};`;
+
     let objectEventGraphicsInfoH = getFileString(config["object_event_graphics_info.h"], this.workspaceRoot);
     objectEventGraphicsInfoH = objectEventGraphicsInfoH.replace(this.objectEventInfoStr || "", replaceStr);
     writeFileString(objectEventGraphicsInfoH, config["object_event_graphics_info.h"], this.workspaceRoot);
     window.showInformationMessage(`${this.definition} related data has been saved.`);
+
+    const imageTablePointer = this.objectEventInfo?.images;
+    if (!imageTablePointer) {
+      throw Error("Missing image table pointer.");
+    }
+    let objectEventsPicTablesH = getFileString(config["object_event_pic_tables.h"], this.workspaceRoot);
+
+    const parsedData = parseCObjectArray(
+      objectEventsPicTablesH,
+      `static const struct SpriteFrameImage ${imageTablePointer}`
+    );
+
+    const framesStr = `static const struct SpriteFrameImage ${imageTablePointer}[] = {\n\t${this._generateFramesFromFrames(
+      frames
+    )},\n};`;
+    objectEventsPicTablesH = objectEventsPicTablesH.replace(parsedData.match, framesStr);
+    writeFileString(objectEventsPicTablesH, config["object_event_pic_tables.h"], this.workspaceRoot);
   }
 
   deleteFromWorkspace() {
@@ -296,29 +367,6 @@ export class ObjectEvent extends TreeItem {
     window.showInformationMessage(`${this.definition} related data has been deleted, but the definition will be kept.`);
   }
 
-  private static _generateFrames(objectEventPicSymbol: string, width: number, height: number, count: number) {
-    const framesArr: string[] = [];
-    for (let index = 0; index < count; index++) {
-      framesArr.push(`overworld_frame(${objectEventPicSymbol}, ${width / 8}, ${height / 8}, ${index})`);
-    }
-    return framesArr.join(",\n\t");
-  }
-
-  private static _generateFramesObject(
-    objectEventPicTableSymbol: string,
-    objectEventPicSymbol: string,
-    width: number,
-    height: number,
-    count: number
-  ) {
-    return `\nstatic const struct SpriteFrameImage ${objectEventPicTableSymbol}[] = {\n\t${this._generateFrames(
-      objectEventPicSymbol,
-      width,
-      height,
-      count
-    )}\n};\n`;
-  }
-
   private static _generateSpriteSheetRule(path: string, width: number, height: number) {
     return `${path}: %.4bpp: %.png\n\t$(GFX) $< $@ -mwidth ${width / 8} -mheight ${height / 8}`;
   }
@@ -358,6 +406,22 @@ export class ObjectEvent extends TreeItem {
       placeHolder: "",
       value: "",
     });
+    const importImage = await window.showInputBox({
+      title: "Import Pic?",
+      placeHolder: "",
+      value: "yes",
+    });
+
+    let imgSrc: Uri[] | undefined;
+
+    if (importImage && ["y", "yes", "Y", "YES", "Yes"].includes(importImage)) {
+      imgSrc = await window.showOpenDialog({
+        title: "Import overworld image",
+        filters: {
+          images: ["png"],
+        },
+      });
+    }
 
     if (!nameStr || !sizeStr || !framesStr) {
       return;
@@ -394,12 +458,19 @@ export class ObjectEvent extends TreeItem {
     );
     writeFileString(eventObjectsH, config["event_objects.h"], workspaceRoot);
 
+    // Import Pic if exist
+    const objectEventPicPngPath = `graphics/object_events/pics/people/${nameInLowerSnakecase}.png`;
+    const objectEventPicIncBinPath = `graphics/object_events/pics/people/${nameInLowerSnakecase}.4bpp`;
+    const objectEventPaletteIncBinPath = `graphics/object_events/pics/people/${nameInLowerSnakecase}.gbapal`;
+
+    if (imgSrc) {
+      fs.copyFileSync(imgSrc[0].fsPath, path.join(workspaceRoot, objectEventPicPngPath));
+    }
+
     // create frames
     const objectEventPicTableSymbol = `sPicTable_${nameInUpperFirstCamelcase}`;
     const objectEventPicSymbol = `gObjectEventPic_${nameInUpperFirstCamelcase}`;
     const objectEventPaletteSymbol = `gObjectEventPalette_${nameInUpperFirstCamelcase}`;
-    const objectEventPicIncBinPath = `graphics/object_events/pics/people/${nameInLowerSnakecase}.4bpp`;
-    const objectEventPaletteIncBinPath = `graphics/object_events/pics/people/${nameInLowerSnakecase}.gbapal`;
 
     const [width, height] = sizeStr.split("x");
     const frameCount = Number(framesStr);
