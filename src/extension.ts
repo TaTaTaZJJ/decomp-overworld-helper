@@ -1,7 +1,9 @@
-import { commands, ExtensionContext, window, workspace } from "vscode";
+import { commands, Disposable, ExtensionContext, window, workspace } from "vscode";
 import { ObjectEventsTreeDataProvider } from "./core/objectEventTreeDataProvider";
 import { ObjectEvent } from "./core/objectEvent";
 import { OverworldHelperPanel } from "./panels/objectEventPanel";
+
+let objectEventListener: Disposable | null = null; // allow only one listener
 
 export function activate(context: ExtensionContext) {
   const workspaceRoot =
@@ -21,8 +23,15 @@ export function activate(context: ExtensionContext) {
     commands.registerCommand("objectEvents.refreshEntry", () => objectEventsProvider.refresh()),
     commands.registerCommand("objectEvents.addEntry", async () => {
       try {
-        await ObjectEvent.create(workspaceRoot);
+        const created = await ObjectEvent.create(workspaceRoot);
         objectEventsProvider.refresh();
+        if (created) {
+          OverworldHelperPanel.render(context, workspaceRoot);
+          setTimeout(() => {
+            objectEventListener?.dispose();
+            objectEventListener = OverworldHelperPanel.setData(created, context, workspaceRoot);
+          }, 1000);
+        }
       } catch (error) {
         window.showErrorMessage(String(error));
       }
@@ -31,7 +40,8 @@ export function activate(context: ExtensionContext) {
       try {
         OverworldHelperPanel.render(context, workspaceRoot);
         setTimeout(() => {
-          OverworldHelperPanel.setData(objectEvent, context, workspaceRoot);
+          objectEventListener?.dispose();
+          objectEventListener = OverworldHelperPanel.setData(objectEvent, context, workspaceRoot);
         }, 1000);
       } catch (error) {
         window.showErrorMessage(String(error));

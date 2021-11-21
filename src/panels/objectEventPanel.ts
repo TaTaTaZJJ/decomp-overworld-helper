@@ -32,14 +32,17 @@ export class OverworldHelperPanel {
     }
     const name = objectEvent.definition;
     const data = objectEvent.getDataFromWorkspace();
-    this.currentPanel?._panel.webview.postMessage({
+    if (!this.currentPanel) {
+      throw Error("Panel not rendered!");
+    }
+    this.currentPanel._panel.webview.postMessage({
       command: "editEntry",
       name,
       data: data.info,
       images: data.images,
       imageTables: data.imageTables,
     });
-    this.currentPanel?._panel.webview.onDidReceiveMessage((message) => {
+    return this.currentPanel._panel.webview.onDidReceiveMessage((message) => {
       switch (message.command) {
         case "saveEntry":
           objectEvent.setDataToWorkspace(message.data, message.frames);
