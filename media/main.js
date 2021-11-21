@@ -45,70 +45,6 @@ const imagesPreview = document.getElementById("oe-images-preview");
 const affineAnims = document.getElementById("oe-affine-anims");
 const imagePtr = document.getElementById("oe-image-ptr");
 
-tileTag.oninput = () => {
-  state.data.tileTag = tileTag.value;
-};
-
-paletteTag1.oninput = () => {
-  state.data.paletteTag1 = paletteTag1.value;
-};
-
-paletteTag2.oninput = () => {
-  state.data.paletteTag2 = paletteTag2.value;
-};
-
-size.oninput = () => {
-  state.data.size = size.value;
-};
-
-width.oninput = () => {
-  state.data.width = width.value;
-};
-
-height.oninput = () => {
-  state.data.height = height.value;
-};
-
-paletteSlot.oninput = () => {
-  state.data.paletteSlot = paletteSlot.value;
-};
-
-imagePtr.oninput = () => {
-  state.data.images = imagePtr.value;
-};
-
-shadowSize.onchange = () => {
-  state.data.shadowSize = shadowSize.value;
-};
-
-inanimate.onchange = () => {
-  state.data.inanimate = inanimate.checked ? "TRUE" : "FALSE";
-};
-
-disableReflectionPaletteLoad.onchange = () => {
-  state.data.disableReflectionPaletteLoad = disableReflectionPaletteLoad.checked ? "TRUE" : "FALSE";
-};
-
-tracks.onchange = () => {
-  state.data.tracks = tracks.value;
-};
-
-oam.onchange = () => {
-  state.data.oam = oam.value;
-};
-
-subspriteTables.oninput = () => {
-  state.data.subspriteTables = subspriteTables.value;
-};
-
-anims.oninput = () => {
-  state.data.anims = anims.value;
-};
-
-affineAnims.oninput = () => {
-  state.data.affineAnims = affineAnims.value;
-};
-
 // Methods
 function renderImagesPreview() {
   imagesPreview.innerHTML = "";
@@ -123,7 +59,8 @@ function renderFrameRow(image, imageIndex) {
   const div = document.createElement("div");
   div.style = "display:flex";
 
-  const typeField = document.createElement("vscode-dropdown");
+   // TODO: vscode-dropdown cannot set value in this method, this is temporary work around
+  const typeField = document.createElement("select");
   const ptrField = document.createElement("vscode-text-field");
   const widthField = document.createElement("vscode-text-field");
   const heightField = document.createElement("vscode-text-field");
@@ -137,7 +74,10 @@ function renderFrameRow(image, imageIndex) {
   frameField.style = "width:100px; margin-right:2px;padding-bottom:1px;";
   deleteButton.style = "width:50px; height:25px; padding-bottom:1px";
 
-  typeField.innerHTML = "<vscode-option>overworld_frame</vscode-option><vscode-option>obj_frame_tiles</vscode-option>";
+  typeField.innerHTML = `
+    <option value="overworld_frame">overworld_frame</option>
+    <option value="obj_frame_tiles">obj_frame_tiles</option>
+  `;
   deleteButton.innerText = "-";
   typeField.value = image.type;
   ptrField.value = image.ptr;
@@ -146,23 +86,18 @@ function renderFrameRow(image, imageIndex) {
   frameField.value = image.frame;
 
   typeField.onchange = () => {
-    console.log("type");
     image.type = typeField.value;
   };
   ptrField.oninput = () => {
-    console.log("ptrField");
     image.ptr = ptrField.value;
   };
   widthField.oninput = () => {
-    console.log("widthField");
     image.width = widthField.value;
   };
   heightField.oninput = () => {
-    console.log("heightField");
     image.height = heightField.value;
   };
   frameField.oninput = () => {
-    console.log("frameField");
     image.frame = frameField.value;
   };
 
@@ -237,34 +172,106 @@ function deserializeData() {
   renderFramesTable();
 }
 
-window.onload = () => {
-  deserializeData();
-};
-
-window.addEventListener("message", (event) => {
+function handleMessage(event) {
   const message = event.data;
   switch (message.command) {
     case "editEntry":
       vscode.setState({
-        state: { data: message.data, imagesSrc: message.images, framesTable: message.imageTables, name: message.name },
+        state: {
+          data: message.data,
+          imagesSrc: message.images,
+          framesTable: message.imageTables,
+          name: message.name,
+        },
       });
       deserializeData();
       break;
   }
-});
+}
 
-document.getElementById("save-object-event").onclick = (e) => {
+function handleSave() {
   vscode.postMessage({
     command: "saveEntry",
     definition: definition.value,
     data: state.data,
     frames: state.framesTable,
   });
-};
+}
 
-document.getElementById("delete-object-event").onclick = (e) => {
+function handleDelete() {
   vscode.postMessage({
     command: "deleteEntry",
     definition: definition.value,
   });
+}
+
+window.onload = () => {
+  deserializeData();
+  window.addEventListener("message", handleMessage);
+  document.getElementById("save-object-event").addEventListener("click", handleSave);
+  document.getElementById("delete-object-event").addEventListener("click", handleDelete);
+
+  tileTag.oninput = () => {
+    state.data.tileTag = tileTag.value;
+  };
+
+  paletteTag1.oninput = () => {
+    state.data.paletteTag1 = paletteTag1.value;
+  };
+
+  paletteTag2.oninput = () => {
+    state.data.paletteTag2 = paletteTag2.value;
+  };
+
+  size.oninput = () => {
+    state.data.size = size.value;
+  };
+
+  width.oninput = () => {
+    state.data.width = width.value;
+  };
+
+  height.oninput = () => {
+    state.data.height = height.value;
+  };
+
+  paletteSlot.oninput = () => {
+    state.data.paletteSlot = paletteSlot.value;
+  };
+
+  imagePtr.oninput = () => {
+    state.data.images = imagePtr.value;
+  };
+
+  shadowSize.onchange = () => {
+    state.data.shadowSize = shadowSize.value;
+  };
+
+  inanimate.onchange = () => {
+    state.data.inanimate = inanimate.checked ? "TRUE" : "FALSE";
+  };
+
+  disableReflectionPaletteLoad.onchange = () => {
+    state.data.disableReflectionPaletteLoad = disableReflectionPaletteLoad.checked ? "TRUE" : "FALSE";
+  };
+
+  tracks.onchange = () => {
+    state.data.tracks = tracks.value;
+  };
+
+  oam.onchange = () => {
+    state.data.oam = oam.value;
+  };
+
+  subspriteTables.oninput = () => {
+    state.data.subspriteTables = subspriteTables.value;
+  };
+
+  anims.oninput = () => {
+    state.data.anims = anims.value;
+  };
+
+  affineAnims.oninput = () => {
+    state.data.affineAnims = affineAnims.value;
+  };
 };
